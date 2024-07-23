@@ -1,8 +1,8 @@
 //pub mod args;
-pub mod chunk;
-pub mod chunk_type;
+//pub mod chunk;
+mod chunk_type;
 //pub mod commands;
-pub mod png;
+//pub mod png;
 
 #[derive(Debug)]
 pub enum Error {
@@ -12,3 +12,5 @@ pub enum Error {
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+pub use chunk_type::ChunkType;

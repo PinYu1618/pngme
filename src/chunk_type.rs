@@ -6,52 +6,43 @@ use crate::{Error, Result};
 /// A validated PNG chunk type. See the PNG spec for more details.
 /// http://www.libpng.org/pub/png/spec/1.2/PNG-Structure.html
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ChunkType {
-    pub data: [u8; 4],
-}
+pub struct ChunkType([u8; 4]);
 
 impl ChunkType {
     /// Returns the raw bytes contained in this chunk
     pub fn bytes(&self) -> [u8; 4] {
-        self.data
+        self.0
     }
 
     /// Returns the property state of the first byte as described in the PNG spec
     pub fn is_critical(&self) -> bool {
-        use core::u8;
-        u8::is_ascii_uppercase(&self.data[0])
+        self.0[0].is_ascii_uppercase()
     }
 
     /// Returns the property state of the second byte as described in the PNG spec
     pub fn is_public(&self) -> bool {
-        use core::u8;
-        u8::is_ascii_uppercase(&self.data[1])
+        self.0[1].is_ascii_uppercase()
     }
 
     /// Returns the property state of the third byte as described in the PNG spec
     pub fn is_reserved_bit_valid(&self) -> bool {
-        use core::u8;
-        u8::is_ascii_uppercase(&self.data[2])
+        self.0[2].is_ascii_uppercase()
     }
 
     /// Returns the property state of the fourth byte as described in the PNG spec
     pub fn is_safe_to_copy(&self) -> bool {
-        use core::u8;
-        u8::is_ascii_lowercase(&self.data[3])
+        self.0[3].is_ascii_lowercase()
     }
 
     /// Returns true if the reserved byte is valid and all four bytes are represented by the characters A-Z or a-z.
     /// Note that this chunk type should always be valid as it is validated during construction.
     pub fn is_valid(&self) -> bool {
-        if !self.is_reserved_bit_valid() {
-            return false;
-        }
-        self.data.iter().all(|&byte| Self::is_valid_byte(byte))
+        self.is_reserved_bit_valid() && self.0.iter().all(Self::is_valid_byte)
     }
 
-    /// Valid bytes are represented by the characters A-Z or a-z
-    pub fn is_valid_byte(byte: u8) -> bool {
-        (byte >= 65 && byte <= 90) || (byte >= 97 && byte <= 122)
+    /// A byte is valid if it is represented by the characters A-Z or a-z
+    fn is_valid_byte(byte: &u8) -> bool {
+        byte.is_ascii_alphabetic()
     }
 }
 
@@ -59,9 +50,8 @@ impl TryFrom<[u8; 4]> for ChunkType {
     type Error = Error;
 
     fn try_from(bytes: [u8; 4]) -> Result<Self> {
-        let chunktype = Self { data: bytes };
-        match chunktype.is_valid() {
-            true => Ok(chunktype),
+        match bytes.iter().all(Self::is_valid_byte) {
+            true => Ok(Self(bytes)),
             false => Err(Error::InvalidChunkType),
         }
     }
@@ -69,7 +59,7 @@ impl TryFrom<[u8; 4]> for ChunkType {
 
 impl fmt::Display for ChunkType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", std::str::from_utf8(&self.data).unwrap())
+        write!(f, "{}", std::str::from_utf8(&self.0).unwrap())
     }
 }
 
@@ -133,13 +123,11 @@ mod tests {
         assert!(chunk.is_reserved_bit_valid());
     }
 
-    /*
     #[test]
     pub fn test_chunk_type_is_reserved_bit_invalid() {
         let chunk = ChunkType::from_str("Rust").unwrap();
         assert!(!chunk.is_reserved_bit_valid());
     }
-    */
 
     #[test]
     pub fn test_chunk_type_is_safe_to_copy() {
@@ -159,7 +147,6 @@ mod tests {
         assert!(chunk.is_valid());
     }
 
-    /*
     #[test]
     pub fn test_invalid_chunk_is_valid() {
         let chunk = ChunkType::from_str("Rust").unwrap();
@@ -168,7 +155,6 @@ mod tests {
         let chunk = ChunkType::from_str("Ru1t");
         assert!(chunk.is_err());
     }
-    */
 
     #[test]
     pub fn test_chunk_type_string() {
