@@ -1,5 +1,5 @@
-use core::fmt;
-use core::str::FromStr;
+use std::fmt;
+use std::str::FromStr;
 
 use crate::{Error, Result};
 
@@ -37,7 +37,7 @@ impl ChunkType {
     /// Returns true if the reserved byte is valid and all four bytes are represented by the characters A-Z or a-z.
     /// Note that this chunk type should always be valid as it is validated during construction.
     pub fn is_valid(&self) -> bool {
-        self.is_reserved_bit_valid() && self.0.iter().all(Self::is_valid_byte)
+        self.is_reserved_bit_valid()
     }
 
     /// A byte is valid if it is represented by the characters A-Z or a-z
@@ -59,6 +59,8 @@ impl TryFrom<[u8; 4]> for ChunkType {
 
 impl fmt::Display for ChunkType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Since the bytes is checked to be ascii
+        // alphabetic during construction, just unwrap it.
         write!(f, "{}", std::str::from_utf8(&self.0).unwrap())
     }
 }
