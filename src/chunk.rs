@@ -1,17 +1,15 @@
-use core::fmt;
+use std::fmt;
 
-use crate::{Error, Result};
-/* use crate::png::ChunkType; */
-use crate::chunk_type::ChunkType;
+use crate::{ChunkType, Error, Result};
 
 /// A validated PNG chunk. See the PNG Spec for more details
 /// http://www.libpng.org/pub/png/spec/1.2/PNG-Structure.html
 #[derive(Debug, Clone)]
 pub struct Chunk {
-    pub length: u32,
-    pub chunk_type: ChunkType,
-    pub data: Vec<u8>,
-    pub crc: u32,
+    length: u32,
+    chunk_type: ChunkType,
+    data: Vec<u8>,
+    crc: u32,
 }
 
 impl Chunk {
@@ -55,16 +53,14 @@ impl Chunk {
     /// 3. The data itself *(`length` bytes)*
     /// 4. The CRC of the chunk type and data *(4 bytes)*
     pub fn as_bytes(&self) -> Vec<u8> {
-        let val: Vec<u8> = self
-            .length()
+        self.length()
             .to_be_bytes()
             .iter()
             .chain(self.chunk_type().bytes().iter())
             .chain(self.data())
             .chain(self.crc().to_be_bytes().iter())
             .copied()
-            .collect();
-        val
+            .collect()
     }
 }
 
@@ -110,14 +106,16 @@ mod tests {
             .chain(crc.to_be_bytes().iter())
             .copied()
             .collect();
-        
+
         Chunk::try_from(chunk_data.as_ref()).unwrap()
     }
 
     #[test]
     fn test_new_chunk() {
         let chunk_type = ChunkType::from_str("RuSt").unwrap();
-        let data = "This is where your secret message will be!".as_bytes().to_vec();
+        let data = "This is where your secret message will be!"
+            .as_bytes()
+            .to_vec();
         let chunk = Chunk::new(chunk_type, data);
         assert_eq!(chunk.length(), 42);
         assert_eq!(chunk.crc(), 2882656334);
@@ -212,9 +210,9 @@ mod tests {
             .chain(crc.to_be_bytes().iter())
             .copied()
             .collect();
-        
+
         let chunk: Chunk = TryFrom::try_from(chunk_data.as_ref()).unwrap();
-        
+
         let _chunk_string = format!("{}", chunk);
     }
 }
