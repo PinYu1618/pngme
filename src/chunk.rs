@@ -1,4 +1,9 @@
-use std::fmt;
+use std::{
+    fmt,
+    io::{BufReader, Read},
+};
+
+use crc::{Crc, CRC_32_ISO_HDLC};
 
 use crate::{ChunkType, Error, Result};
 
@@ -13,6 +18,8 @@ pub struct Chunk {
 }
 
 impl Chunk {
+    const CRC: Crc<u32> = Crc::<u32>::new(&CRC_32_ISO_HDLC);
+
     pub fn new(chunk_type: ChunkType, data: Vec<u8>) -> Self {
         todo!()
     }
@@ -69,7 +76,9 @@ impl TryFrom<&[u8]> for Chunk {
 
     fn try_from(bytes: &[u8]) -> Result<Self> {
         // check the len of the bytes
-        // ^TODO: Better use a BufRead
+        let mut reader = BufReader::new(bytes);
+        let mut buf = [0u8; 4];
+        //reader.read_exact(&mut buf)?;
         todo!()
     }
 }
