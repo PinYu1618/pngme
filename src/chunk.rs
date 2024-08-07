@@ -20,8 +20,16 @@ pub struct Chunk {
 impl Chunk {
     const CRC: Crc<u32> = Crc::<u32>::new(&CRC_32_ISO_HDLC);
 
+    //FIXME: does the concatenated bytes required to be continuous?
     pub fn new(chunk_type: ChunkType, data: Vec<u8>) -> Self {
-        todo!()
+        let bytes = chunk_type.bytes();
+        let crc = Self::CRC.checksum(&bytes);
+        Self {
+            length: data.len().try_into().expect("Chunk data too long."),
+            chunk_type,
+            data,
+            crc,
+        }
     }
 
     /// The length of the data portion of this chunk.
